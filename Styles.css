@@ -1,0 +1,133 @@
+/* ======================
+   Base Reset
+====================== */
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #090e14;
+  --text: #ffffff;
+  --muted: #c3ccd7;
+  --glass-border: rgba(255,255,255,0.18);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow-x: hidden;
+}
+
+img { max-width: 100%; display: block; }
+
+.container { width: 90%; max-width: 1100px; margin: auto; }
+.container.narrow { max-width: 720px; }
+
+/* ======================
+   Glass UI
+====================== */
+.glass, .glass-panel {
+  background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+  backdrop-filter: blur(30px) saturate(155%);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+}
+
+/* ======================
+   Navigation
+====================== */
+.nav { position: sticky; top: 0; z-index: 200; }
+.nav-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.logo { font-weight: 600; }
+.nav nav { display: flex; align-items: center; gap: 20px; }
+.nav a { color: #fff; text-decoration: none; font-size: 15px; }
+.nav a:hover { opacity: 0.8; }
+.nav .glass-btn { white-space: nowrap; flex-shrink: 0; }
+
+/* Mobile Nav */
+@media (max-width: 768px) {
+  .nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
+  .nav nav { flex-direction: column; width: 100%; gap: 12px; }
+  .nav .glass-btn { width: 100%; text-align: center; }
+}
+
+/* ======================
+   Hero Section
+====================== */
+.hero { position: relative; height: 95vh; overflow: hidden; }
+#fluidCanvas { position: absolute; inset: 0; z-index: 0; }
+.hero-inner { position: relative; z-index: 1; padding-top: 180px; }
+.hero h1 { font-size: 58px; line-height: 1.05; color: #fff; }
+.hero p { margin-top: 24px; font-size: 18px; color: #fff; opacity: 0.9; max-width: 520px; }
+
+/* ======================
+   Sections
+====================== */
+.section { padding: 120px 0; }
+.center { text-align: center; }
+.center-content { display: flex; flex-direction: column; align-items: center; gap: 32px; }
+
+/* ======================
+   Work Section
+====================== */
+.work-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 26px; margin-top: 48px; }
+.work-card { padding: 26px; cursor: pointer; transition: transform 0.35s ease, box-shadow 0.35s ease; }
+.work-card:hover { transform: translateY(-6px) scale(1.04); box-shadow: 0 26px 80px rgba(0,0,0,0.65), inset 0 1px 1px rgba(255,255,255,0.25); }
+.work-card img { border-radius: 16px; margin-bottom: 16px; }
+.work-card h3 { margin-bottom: 8px; font-size: 20px; }
+.work-card p { color: var(--muted); font-size: 15px; }
+
+/* ======================
+   Buttons
+====================== */
+.glass-btn {
+  padding: 16px 36px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(22px);
+  background: transparent;
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.glass-btn:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
+.glass-btn.primary {
+  background: linear-gradient(135deg, rgba(120,160,210,0.9), rgba(120,180,200,0.85));
+  color: #090e14;
+}
+
+/* ======================
+   Modals
+====================== */
+.modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(5,8,12,0.7); backdrop-filter: blur(20px); }
+.modal.active { display: flex; }
+.modal-inner { max-width: 900px; width: 90%; padding: 48px; position: relative; }
+.modal-inner img { border-radius: 18px; margin-bottom: 32px; }
+.modal-inner h3 { font-size: 26px; margin-bottom: 16px; }
+.modal-inner p { font-size: 17px; line-height: 1.6; color: var(--muted); }
+
+/* Close Button — simple X, no box */
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+/* Lock scroll when modal open */
+body.modal-open { overflow: hidden; }
+
+/* ======================
+   Responsive
+====================== */
+@media (max-width: 768px) {
+  .hero h1 { font-size: 40px; }
+  .hero-inner { padding-top: 140px; }
+  .modal-inner { padding: 32px; }
+}
