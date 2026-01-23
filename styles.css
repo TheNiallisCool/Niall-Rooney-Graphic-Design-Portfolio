@@ -131,35 +131,3 @@ body.modal-open { overflow: hidden; }
   .hero-inner { padding-top: 140px; }
   .modal-inner { padding: 32px; }
 }
-
-/* Media wrapper inside work cards */
-.work-media {
-  width: 100%;
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-/* Responsive video */
-.work-media video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-/* Media container with fixed ratio */
-.work-media {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  border-radius: 14px;
-  margin-bottom: 16px;
-}
-
-/* Make video fill it properly */
-.work-media video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
