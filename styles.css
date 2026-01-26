@@ -149,3 +149,17 @@ body.modal-open { overflow: hidden; }
   border: none;
   display: block;
 }
+.modal-media {
+  width: 100%;
+  height: 70vh;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.modal-media iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
