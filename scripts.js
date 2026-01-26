@@ -71,28 +71,4 @@ function animate(){
   ctx.globalCompositeOperation="source-over";
   requestAnimationFrame(animate);
 }
-animate();
-const cards = document.querySelectorAll('.work-card');
-const modals = document.querySelectorAll('.modal');
-const closes = document.querySelectorAll('.modal-close');
-
-cards.forEach(card => {
-  card.addEventListener('click', () => {
-    const modalId = card.getAttribute('data-modal');
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'flex';
-  });
-});
-
-closes.forEach(btn => {
-  btn.addEventListener('click', () => {
-    btn.closest('.modal').style.display = 'none';
-  });
-});
-
-modals.forEach(modal => {
-  modal.addEventListener('click', e => {
-    if (e.target === modal) modal.style.display = 'none';
-  });
-});
 
