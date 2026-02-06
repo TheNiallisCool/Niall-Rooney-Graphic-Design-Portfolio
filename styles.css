@@ -93,7 +93,7 @@ img { max-width: 100%; display: block; }
 .glass-btn:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
 .glass-btn.primary {
   background: linear-gradient(135deg, rgba(120,160,210,0.9), rgba(120,180,200,0.85));
-  color: #00ace6;
+  color: #fff;
 }
 
 /* ======================
