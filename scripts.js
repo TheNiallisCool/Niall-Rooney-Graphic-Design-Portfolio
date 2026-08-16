@@ -15,18 +15,9 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ---------- 1. WALLPAPER ----------
-     Niall's own illustration is a static <img> (see index.html) with a
-     slow CSS-driven Ken Burns drift (see styles.css .wallpaper-img) —
-     no JS needed here; prefers-reduced-motion is handled in CSS. */
+  /* ---------- 1. WALLPAPER ---------- */
 
-  /* ---------- 2. MENU BAR CLOCK ----------
-     Always shows the real current date/time: ticks aligned to the start
-     of each real minute (not a fixed interval, which can drift), and
-     force-refreshes the instant the tab regains focus/visibility —
-     background tabs get their timers throttled or paused by the browser,
-     so without this the clock could sit stale after being backgrounded,
-     the laptop sleeping, or a timezone change mid-trip. */
+  /* ---------- 2. MENU BAR CLOCK ---------- */
   (function initClock() {
     const el = document.getElementById('menuClock');
     if (!el) return;
@@ -80,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     handle.addEventListener('pointermove', (e) => {
       if (pointerId === null || e.pointerId !== pointerId) return;
-      if (opts.disabled && opts.disabled()) return; // movement ignored -> stays a tap
+      if (opts.disabled && opts.disabled()) return;
       const dx = e.clientX - startPX;
       const dy = e.clientY - startPY;
 
@@ -121,8 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleIconActivate(icon) {
-    // A single click selects (the highlight) and opens the window in the
-    // same motion — no more click-to-select-then-click-again-to-open.
     deselectAll();
     icon.classList.add('selected');
     selectedIcon = icon;
@@ -139,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       onEnd: (moved) => {
         icon.classList.remove('dragging');
         if (moved) {
-          icon.dataset.userMoved = 'true'; // hand-placed — leave it alone on resize
+          icon.dataset.userMoved = 'true';
         } else {
           handleIconActivate(icon);
         }
@@ -153,21 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---- Layout system: "messy" (uniform, scattered — the default) vs
-     "tidy" (the 3 key projects ~15% bigger in their own row up top, the
-     rest in a grid underneath). Which mode is active is tracked so a
-     window resize re-lays-out things the same way. ---- */
   const CELL_W = 96, CELL_H = 108, PAD_X = 28, PAD_Y = 24;
   const ICON_W = 88, ICON_H = 96, EDGE_MARGIN = 16, MIN_DIST = 100;
   const FEATURED_ROW_GAP = 46;
-  const FEATURED_W = 101, FEATURED_H = Math.round(96 * 1.15); // matches .dt-icon.big in styles.css
+  const FEATURED_W = 101, FEATURED_H = Math.round(96 * 1.15);
 
   let desktopMode = 'messy';
   const featuredIcons = () => iconEls.filter(el => el.classList.contains('featured'));
   const regularIcons = () => iconEls.filter(el => !el.classList.contains('featured'));
 
-  // Small deterministic PRNG — each icon's spread is stable across resizes
-  // (seeded by its own index) instead of reshuffling every time.
   function seededRandom(seed) {
     let s = seed % 2147483647;
     if (s <= 0) s += 2147483646;
@@ -175,8 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const seededRandForEl = (el) => seededRandom((Number(el.dataset.idx) || 0) * 92821 + 12345);
 
-  // macOS-style column-major flow: fill a column top-to-bottom, then wrap
-  // right. `topFloor` lets the grid start below the featured row.
   function computeGridPositions(els, topFloor) {
     if (!desktop) return [];
     const rect = desktop.getBoundingClientRect();
@@ -189,12 +170,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Truly scattered across the whole desktop, not just jittered within a
-  // tidy grid cell — with light rejection-sampling so icons land near
-  // each other sometimes (real desktops do that) without stacking solid.
-  // `randForEl` returns a fresh rand() generator per icon: seeded (stable,
-  // for the initial load / resize reflow) or genuinely random (for the
-  // "Mess Up Desktop" action, which should shuffle differently every time).
   function scatterAcrossDesktop(els, randForEl, { animate = false } = {}) {
     if (!desktop) return;
     const rect = desktop.getBoundingClientRect();
@@ -231,10 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // "Tidy Up Desktop" (and "Work"): the 3 key projects get ~15% bigger and
-  // line up in their own row at the top; everything else lines up in a
-  // grid underneath. The featured 3 never fall back into the ordinary
-  // grid alongside the rest — they're always pulled into their row.
   function tidyUp() {
     if (isMobile() || !desktop) return;
     desktopMode = 'tidy';
@@ -254,10 +225,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.setTimeout(() => all.forEach(el => el.classList.remove('tidying')), 520);
   }
 
-  // "Mess Up Desktop": genuinely random every time it's invoked (unlike the
-  // stable seeded scatter used on first load). Every icon — including the
-  // 3 "key" ones — is the same size here and scattered like all the rest;
-  // nothing is pinned to a row.
   function messUpDesktop() {
     if (isMobile() || !desktop) return;
     desktopMode = 'messy';
@@ -276,9 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('resize', () => {
     if (isMobile() || !desktop) return;
-    // Hand-placed icons stay put (just clamped back into view); everything
-    // still "in formation" gets re-laid-out for the new bounds, in
-    // whichever mode — messy or tidy — is currently active.
     const rect = desktop.getBoundingClientRect();
     iconEls.forEach(el => {
       if (!el.dataset.userMoved) return;
@@ -304,7 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  /* ---- "Tidy Up Desktop": click empty desktop space to summon it ---- */
   const desktopMenu = document.getElementById('desktopMenu');
 
   function openDesktopMenu(x, y) {
@@ -390,12 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return open.reduce((a, b) => (parseInt(b.style.zIndex || 0) > parseInt(a.style.zIndex || 0) ? b : a));
   }
 
-  // Resizable windows: all 4 edges plus all 4 corners, each dragged the
-  // same way everything else here is — pointer events, no library.
-  // Edges resize one axis; corners resize both together (a uniform
-  // diagonal scale) with the opposite edge/corner staying anchored in
-  // place, same as any real desktop window. Disabled while maximized or
-  // on mobile (window already fills the screen in both cases).
   const WIN_MIN_W = 320, WIN_MIN_H = 220, TOP_FLOOR = 38;
 
   function makeResizable(win) {
@@ -420,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startH = rect.height;
         startLeft = rect.left;
         startTop = rect.top;
-        win.style.maxHeight = 'none'; // let an explicit height win over the default clamp
+        win.style.maxHeight = 'none';
         handle.setPointerCapture(pointerId);
       });
 
@@ -433,7 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const maxW = window.innerWidth - startLeft - 12;
           win.style.width = Math.min(maxW, Math.max(WIN_MIN_W, startW + dx)) + 'px';
         } else if (hasW) {
-          // Right edge stays put — left moves, width fills the gap.
           const rightEdge = startLeft + startW;
           const newLeft = Math.min(Math.max(startLeft + dx, 4), rightEdge - WIN_MIN_W);
           win.style.left = newLeft + 'px';
@@ -444,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const maxH = window.innerHeight - startTop - 12;
           win.style.height = Math.min(maxH, Math.max(WIN_MIN_H, startH + dy)) + 'px';
         } else if (hasN) {
-          // Bottom edge stays put — top moves, height fills the gap.
           const bottomEdge = startTop + startH;
           const newTop = Math.min(Math.max(startTop + dy, TOP_FLOOR), bottomEdge - WIN_MIN_H);
           win.style.top = newTop + 'px';
@@ -487,7 +442,6 @@ document.addEventListener('DOMContentLoaded', () => {
     makeResizable(win);
   });
 
-  // Expose activation triggers for menu bar / dock links that open windows by id
   document.querySelectorAll('[data-open-window]').forEach(trigger => {
     trigger.addEventListener('click', (e) => {
       e.preventDefault();
@@ -500,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       closeAllWindows();
       deselectAll();
-      tidyUp(); // "Work" organizes the same way Tidy Up does — key projects up top
+      tidyUp();
     });
   });
 
@@ -550,7 +504,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---- Dock resize handle: drag the divider to grow/shrink the dock ---- */
   const dockResizeHandle = document.getElementById('dockResizeHandle');
   const DOCK_MIN = 34, DOCK_MAX = 74;
 
@@ -569,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dockResizeHandle.addEventListener('pointermove', (e) => {
       if (pointerId === null || e.pointerId !== pointerId) return;
-      const delta = startY - e.clientY; // drag up = bigger, down = smaller
+      const delta = startY - e.clientY;
       const next = Math.min(DOCK_MAX, Math.max(DOCK_MIN, startSize + delta));
       dock.style.setProperty('--dock-icon-size', next + 'px');
     });
