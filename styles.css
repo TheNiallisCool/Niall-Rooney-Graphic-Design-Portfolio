@@ -197,8 +197,6 @@ a { color: inherit; }
   max-width: 84px;
   padding: 2px 8px;
   border-radius: 8px;
-  /* no background by default — just the text over the wallpaper, with
-     enough shadow to stay legible on any part of the art */
   text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 1px 8px rgba(0,0,0,0.5);
 }
 .dt-icon.selected .dt-icon-label {
@@ -206,17 +204,10 @@ a { color: inherit; }
   text-shadow: none;
 }
 
-/* The 3 key projects (AI Design Systems, Design Language, Cubic³ Rebrand)
-   only grow ~15% bigger while the desktop is tidied — "messy" (the default,
-   and "Mess Up Desktop") treats every icon the same size. `.featured` just
-   marks which 3 they are; `.big` is the toggle Tidy Up applies. Real size
-   increase rather than a transform:scale so the thumbnail and text stay
-   crisp and reflow correctly. */
 .dt-icon.big { width: 101px; }
 .dt-icon.big .dt-icon-thumb { width: 69px; height: 69px; }
 .dt-icon.big .dt-icon-label { font-size: 14px; max-width: 97px; }
 
-/* "Tidy Up Desktop" popup — appears where you click empty desktop space */
 .desktop-menu {
   position: fixed;
   z-index: 900;
@@ -247,8 +238,6 @@ a { color: inherit; }
 .desktop-menu button:focus-visible { background: rgba(255,255,255,0.14); }
 
 @media (max-width: 640px) {
-  /* Free-form scatter doesn't translate to a small touch screen —
-     fall back to a simple, orderly, non-draggable grid. */
   .desktop {
     overflow-y: auto;
     display: grid;
@@ -315,18 +304,15 @@ a { color: inherit; }
   transition: width 0.15s ease-out, height 0.15s ease-out;
 }
 
-/* Each reads as its own little app, in the site's own palette rather than
-   Apple's — same idea (Finder / Notes / Mail / Trash), different voice. */
 .dock-finder { background: linear-gradient(115deg, #f0c8a6 50%, #f8ecd9 50%); }
 .dock-notes  { background: linear-gradient(160deg, #ffe9a8, #f0bd5c); }
 .dock-mail   { background: linear-gradient(160deg, #7fb0e6, #4677c9); }
 .dock-trash  { background: linear-gradient(160deg, #6b7480, #40454d); }
 
-/* Personal-about dock icon: a real photo preview instead of a drawn glyph */
 .dock-icon.dock-photo {
   padding: 0;
   overflow: hidden;
-  background: #2a2a2f; /* shows briefly while the photo loads */
+  background: #2a2a2f;
 }
 .dock-icon.dock-photo img {
   width: 100%;
@@ -336,16 +322,12 @@ a { color: inherit; }
   display: block;
 }
 
-/* NR logo mark used as the "About Me (Professional)" dock icon — scales
-   with the dock's resize handle same as the drawn glyphs do */
 .dock-icon img.dock-logo-img {
   width: calc(var(--dock-icon-size) * 0.72);
   height: auto;
   display: block;
 }
 
-/* Resize handle: a thin visible line with a generous invisible grab zone,
-   same idea as the real macOS dock-edge drag handle */
 .dock-resize-handle {
   width: 17px;
   align-self: stretch;
@@ -370,7 +352,7 @@ a { color: inherit; }
   .dock { gap: 10px; padding: 8px 12px; bottom: 8px; }
   .dock-icon { width: 40px; height: 40px; }
   .dock-icon svg { width: 20px; height: 20px; }
-  .dock-resize-handle { display: none; } /* resize-by-drag doesn't suit touch */
+  .dock-resize-handle { display: none; }
 }
 
 /* ======================
@@ -404,17 +386,13 @@ a { color: inherit; }
   max-height: none;
 }
 
-/* Resize handles — all 4 edges plus all 4 corners. Kept fully inside the
-   window's own box (not overhanging) so overflow:hidden doesn't clip them. */
 .os-resize-handle { position: absolute; touch-action: none; }
 
-/* Edges — single axis */
 .os-resize-n { top: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
 .os-resize-s { bottom: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
 .os-resize-e { right: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
 .os-resize-w { left: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
 
-/* Corners — both axes together, a uniform diagonal scale */
 .os-resize-ne, .os-resize-nw, .os-resize-se, .os-resize-sw {
   width: 18px; height: 18px;
   background-image: linear-gradient(var(--grip-angle),
@@ -430,7 +408,7 @@ a { color: inherit; }
 .os-window.maximized .os-resize-handle { display: none; }
 
 @media (max-width: 640px) {
-  .os-resize-handle { display: none; } /* the window already fills the screen */
+  .os-resize-handle { display: none; }
 }
 
 .os-titlebar {
@@ -473,7 +451,7 @@ a { color: inherit; }
   font-weight: 600;
   color: #fff;
   opacity: 0.9;
-  margin-right: 44px; /* balances the traffic-light cluster so text is visually centered */
+  margin-right: 44px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -495,8 +473,6 @@ a { color: inherit; }
   box-shadow: 0 10px 26px rgba(0,0,0,0.4);
 }
 
-/* NR logo mark inside a pop-out — bigger than the dock version, no crop,
-   just the mark centered above the copy */
 .os-body img.brand-mark {
   display: block;
   height: 96px;
@@ -549,7 +525,6 @@ a { color: inherit; }
   .os-body { padding: 18px; }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
