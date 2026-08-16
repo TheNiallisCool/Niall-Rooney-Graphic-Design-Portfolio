@@ -1,221 +1,543 @@
-/* ======================
-   Base Reset
-====================== */
-* { margin:0; padding:0; box-sizing:border-box; }
+/* =========================================================
+   Niall Rooney — "Desktop" Portfolio
+   styles.css
+   ========================================================= */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #262626;
+  --bg: #f3ecd9;
   --text: #ffffff;
-  --muted: #c3ccd7;
-  --glass-border: rgba(255,255,255,0.18);
+  --muted: #c9d1da;
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-fill: linear-gradient(135deg, rgba(40,44,52,0.62), rgba(20,22,28,0.42));
+  --frost-blur: blur(42px) saturate(180%);
+  --menubar-h: 34px;
+  --dock-h: 78px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden; /* the desktop is a fixed "app", not a scrolling page */
 }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow-x: hidden;
 }
 
 img { max-width: 100%; display: block; }
-
-.container { width: 90%; max-width: 1100px; margin: auto; }
-.container.narrow { max-width: 720px; }
+button { font: inherit; }
+a { color: inherit; }
 
 /* ======================
-   Glass UI
+   Wallpaper — Niall's own illustration, "Strandhill Summer Evening"
 ====================== */
-.glass, .glass-panel {
-  background: linear-gradient(135deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
-  backdrop-filter: blur(30px) saturate(155%);
-  border: 1px solid var(--glass-border);
-  border-radius: 22px;
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
 }
-
-/* ======================
-   Navigation
-====================== */
-.nav { position: sticky; top: 0; z-index: 200; }
-.nav-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
-.logo { font-weight: 600; }
-.nav nav { display: flex; align-items: center; gap: 20px; }
-.nav a { color: #fff; text-decoration: none; font-size: 15px; }
-.nav a:hover { opacity: 0.8; }
-.nav .glass-btn { white-space: nowrap; flex-shrink: 0; }
-
-/* Mobile Nav */
-@media (max-width: 768px) {
-  .nav-inner { flex-direction: column; align-items: flex-start; gap: 12px; padding: 12px 0; }
-  .nav nav { flex-direction: column; width: 100%; gap: 12px; }
-  .nav .glass-btn { width: 100%; text-align: center; }
-}
-
-/* ======================
-   Hero Section
-====================== */
-.hero { position: relative; height: 95vh; overflow: hidden; }
-#fluidCanvas { position: absolute; inset: 0; z-index: 0; }
-.hero-inner { position: relative; z-index: 1; padding-top: 180px; }
-.hero h1 { font-size: 58px; line-height: 1.05; color: #fff; }
-.hero p { margin-top: 24px; font-size: 18px; color: #fff; opacity: 0.9; max-width: 520px; }
-
-/* ======================
-   Sections
-====================== */
-.section { padding: 120px 0; }
-.center { text-align: center; }
-.center-content { display: flex; flex-direction: column; align-items: center; gap: 32px; }
-
-/* ======================
-   Work Section
-====================== */
-.work-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 26px; margin-top: 48px; }
-.work-card { padding: 26px; cursor: pointer; transition: transform 0.35s ease, box-shadow 0.35s ease; }
-.work-card:hover { transform: translateY(-6px) scale(1.04); box-shadow: 0 26px 80px rgba(0,0,0,0.65), inset 0 1px 1px rgba(255,255,255,0.25); }
-.work-card img { border-radius: 16px; margin-bottom: 16px; }
-.work-card h3 { margin-bottom: 8px; font-size: 20px; }
-.work-card p { color: var(--muted); font-size: 15px; }
-
-/* ======================
-   Buttons
-====================== */
-.glass-btn {
-  padding: 16px 36px;
-  border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(22px);
-  background: transparent;
-  color: #fff;
-  text-decoration: none;
-  font-size: 15px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.glass-btn:hover { transform: translateY(-4px); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
-.glass-btn.primary {
-  background: linear-gradient(135deg, rgba(120,160,210,0.9), rgba(120,180,200,0.85));
-  color: #fff;
-}
-
-/* ======================
-   Modals
-====================== */
-.modal { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center; background: rgba(5,8,12,0.7); backdrop-filter: blur(20px); }
-.modal.active { display: flex; }
-.modal-inner { max-width: 900px; width: 90%; padding: 48px; position: relative; }
-.modal-inner img { border-radius: 18px; margin-bottom: 32px; }
-.modal-inner h3 { font-size: 26px; margin-bottom: 16px; }
-.modal-inner p { font-size: 17px; line-height: 1.6; color: var(--muted); }
-
-/* Close Button — simple X, no box */
-.modal-close {
+.wallpaper-img {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  font-size: 28px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 38%;
+  transform-origin: center;
+  animation: wallpaperDrift 60s ease-in-out infinite alternate;
+}
+@keyframes wallpaperDrift {
+  from { transform: scale(1); }
+  to   { transform: scale(1.045); }
+}
+.wallpaper::before {
+  /* soft vignette so UI chrome stays legible everywhere, without flattening the art */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(20,14,10,0) 45%, rgba(20,14,10,0.22) 100%);
+}
+.wallpaper::after {
+  /* frosted grain — the texture that sells "frosted glass" over the art */
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallpaper-img { animation: none; }
+}
+
+/* ======================
+   Menu bar
+====================== */
+.menubar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--menubar-h);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: rgba(24, 26, 32, 0.5);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.06) inset;
+  font-size: 13px;
+}
+.menubar-left, .menubar-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.menubar-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  flex-shrink: 0;
+  white-space: nowrap;
+  text-decoration: none;
+  color: #fff;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+.menubar-logo:hover, .menubar-logo:focus-visible { opacity: 0.8; }
+.menubar-logo img { height: 27px; width: auto; flex-shrink: 0; }
+.menu-item {
   background: none;
   border: none;
   color: #fff;
   cursor: pointer;
-  padding: 0;
-  line-height: 1;
+  opacity: 0.85;
+  font-size: 13px;
+  padding: 4px 2px;
+}
+.menu-item:hover { opacity: 1; }
+.menubar-right { opacity: 0.85; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .menubar { padding: 0 10px; }
+  .menubar-left { gap: 12px; }
+  .menubar-name { display: none; } /* keep just the mark, save space */
+  .menubar-right { display: none; } /* clock gives way to nav on small screens */
 }
 
-/* Lock scroll when modal open */
-body.modal-open { overflow: hidden; }
+/* ======================
+   Desktop (icon field)
+   — icons are freely (and messily) positioned by JS on desktop; on
+     mobile they fall back to an orderly CSS grid, see media query below.
+====================== */
+.desktop {
+  position: absolute;
+  inset: var(--menubar-h) 0 var(--dock-h) 0;
+  z-index: 1;
+  overflow: hidden;
+}
 
-/* Universal media inside work cards (images + video) */
-.work-card img,
-.work-card video {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
+.dt-icon {
+  position: absolute;
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: 10px;
+  cursor: default;
+  user-select: none;
+  touch-action: none;
+  -webkit-user-select: none;
+}
+.dt-icon.selected { background: rgba(90, 140, 220, 0.28); }
+.dt-icon.dragging { opacity: 0.85; z-index: 5; }
+.dt-icon.tidying {
+  transition: left 0.5s cubic-bezier(.4,0,.2,1), top 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+.dt-icon-thumb {
+  position: relative;
+  width: 60px;
+  height: 60px;
   border-radius: 14px;
-  display: block;
-  margin-bottom: 16px;
-}
-
-/* Responsive Behance embed inside modal */
-.modal-media {
-  width: 100%;
-  height: 70vh;
-  border-radius: 16px;
   overflow: hidden;
-  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  background: #1c1e22;
 }
-
-.modal-media iframe {
+.dt-icon-thumb img,
+.dt-icon-thumb video {
   width: 100%;
   height: 100%;
-  border: none;
-  display: block;
+  object-fit: cover;
 }
-.modal-media {
-  width: 100%;
-  height: 70vh;
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 24px;
+.dt-icon-thumb::after {
+  /* glossy sheen — reads as a polished app icon rather than a flat crop */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(155deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 45%);
+  pointer-events: none;
+}
+.dt-icon-label {
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  color: #fff;
+  max-width: 84px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  /* no background by default — just the text over the wallpaper, with
+     enough shadow to stay legible on any part of the art */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 1px 8px rgba(0,0,0,0.5);
+}
+.dt-icon.selected .dt-icon-label {
+  background: rgba(70, 130, 220, 0.55);
+  text-shadow: none;
 }
 
-.modal-media iframe {
+/* The 3 key projects (AI Design Systems, Design Language, Cubic³ Rebrand)
+   only grow ~15% bigger while the desktop is tidied — "messy" (the default,
+   and "Mess Up Desktop") treats every icon the same size. `.featured` just
+   marks which 3 they are; `.big` is the toggle Tidy Up applies. Real size
+   increase rather than a transform:scale so the thumbnail and text stay
+   crisp and reflow correctly. */
+.dt-icon.big { width: 101px; }
+.dt-icon.big .dt-icon-thumb { width: 69px; height: 69px; }
+.dt-icon.big .dt-icon-label { font-size: 14px; max-width: 97px; }
+
+/* "Tidy Up Desktop" popup — appears where you click empty desktop space */
+.desktop-menu {
+  position: fixed;
+  z-index: 900;
+  display: none;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+.desktop-menu.open { display: block; }
+.desktop-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.desktop-menu button:hover,
+.desktop-menu button:focus-visible { background: rgba(255,255,255,0.14); }
+
+@media (max-width: 640px) {
+  /* Free-form scatter doesn't translate to a small touch screen —
+     fall back to a simple, orderly, non-draggable grid. */
+  .desktop {
+    overflow-y: auto;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fill, 78px);
+    justify-content: space-evenly;
+    gap: 14px;
+    padding: 16px 12px;
+  }
+  .dt-icon {
+    position: static !important;
+    transform: none !important;
+    width: 78px;
+  }
+  .dt-icon-thumb { width: 52px; height: 52px; }
+  .desktop-menu { display: none !important; }
+}
+
+/* ======================
+   Dock
+====================== */
+.dock {
+  --dock-icon-size: 48px;
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.14) inset;
+}
+.dock-icon {
+  width: var(--dock-icon-size);
+  height: var(--dock-icon-size);
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #4a5568, #262b33);
+  color: #fff;
+  transition: width 0.15s ease-out, height 0.15s ease-out, transform 0.12s ease-out, filter 0.12s ease-out;
+  transform-origin: bottom center;
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -7px 10px rgba(0,0,0,0.14);
+}
+.dock-icon:hover, .dock-icon:focus-visible { filter: brightness(1.08); }
+.dock-icon svg {
+  display: block;
+  width: calc(var(--dock-icon-size) * 0.55);
+  height: calc(var(--dock-icon-size) * 0.55);
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+  transition: width 0.15s ease-out, height 0.15s ease-out;
+}
+
+/* Each reads as its own little app, in the site's own palette rather than
+   Apple's — same idea (Finder / Notes / Mail / Trash), different voice. */
+.dock-finder { background: linear-gradient(115deg, #f0c8a6 50%, #f8ecd9 50%); }
+.dock-notes  { background: linear-gradient(160deg, #ffe9a8, #f0bd5c); }
+.dock-mail   { background: linear-gradient(160deg, #7fb0e6, #4677c9); }
+.dock-trash  { background: linear-gradient(160deg, #6b7480, #40454d); }
+
+/* Personal-about dock icon: a real photo preview instead of a drawn glyph */
+.dock-icon.dock-photo {
+  padding: 0;
+  overflow: hidden;
+  background: #2a2a2f; /* shows briefly while the photo loads */
+}
+.dock-icon.dock-photo img {
   width: 100%;
   height: 100%;
-  border: none;
+  object-fit: cover;
+  border-radius: inherit;
   display: block;
 }
+
+/* Resize handle: a thin visible line with a generous invisible grab zone,
+   same idea as the real macOS dock-edge drag handle */
+.dock-resize-handle {
+  width: 17px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.dock-resize-handle::before {
+  content: "";
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 0;
+  background: rgba(255,255,255,0.2);
+}
+.dock-resize-handle:hover::before,
+.dock-resize-handle:active::before { background: rgba(255,255,255,0.45); }
+
+@media (max-width: 640px) {
+  .dock { gap: 10px; padding: 8px 12px; bottom: 8px; }
+  .dock-icon { width: 40px; height: 40px; }
+  .dock-icon svg { width: 20px; height: 20px; }
+  .dock-resize-handle { display: none; } /* resize-by-drag doesn't suit touch */
+}
+
+/* ======================
+   Windows (project detail panels)
+====================== */
+.os-window {
+  display: none;
+  position: fixed;
+  top: 90px;
+  left: 90px;
+  width: clamp(300px, 90vw, 760px);
+  min-width: 320px;
+  min-height: 220px;
+  max-height: 82vh;
+  flex-direction: column;
+  z-index: 100;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.12) inset;
+  overflow: hidden;
+}
+.os-window.open { display: flex; }
+.os-window.maximized {
+  top: 44px !important;
+  left: 20px !important;
+  width: calc(100vw - 40px) !important;
+  height: calc(100vh - 44px - var(--dock-h)) !important;
+  max-height: none;
+}
+
+/* Resize handles — all 4 edges plus all 4 corners. Kept fully inside the
+   window's own box (not overhanging) so overflow:hidden doesn't clip them. */
+.os-resize-handle { position: absolute; touch-action: none; }
+
+/* Edges — single axis */
+.os-resize-n { top: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
+.os-resize-s { bottom: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
+.os-resize-e { right: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
+.os-resize-w { left: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
+
+/* Corners — both axes together, a uniform diagonal scale */
+.os-resize-ne, .os-resize-nw, .os-resize-se, .os-resize-sw {
+  width: 18px; height: 18px;
+  background-image: linear-gradient(var(--grip-angle),
+    transparent 0 40%, rgba(255,255,255,0.4) 40% 46%,
+    transparent 46% 60%, rgba(255,255,255,0.4) 60% 66%,
+    transparent 66% 100%);
+}
+.os-resize-nw { top: 0; left: 0; cursor: nwse-resize; --grip-angle: 135deg; }
+.os-resize-se { bottom: 0; right: 0; cursor: nwse-resize; --grip-angle: 135deg; }
+.os-resize-ne { top: 0; right: 0; cursor: nesw-resize; --grip-angle: 45deg; }
+.os-resize-sw { bottom: 0; left: 0; cursor: nesw-resize; --grip-angle: 45deg; }
+
+.os-window.maximized .os-resize-handle { display: none; }
+
+@media (max-width: 640px) {
+  .os-resize-handle { display: none; } /* the window already fills the screen */
+}
+
+.os-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  cursor: grab;
+  touch-action: none;
+}
+.os-titlebar:active { cursor: grabbing; }
+
+.traffic {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+.traffic.red { background: #ff5f57; }
+.traffic.yellow { background: #febc2e; }
+.traffic.green { background: #28c840; }
+.traffic:hover::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+}
+
+.os-title {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.9;
+  margin-right: 44px; /* balances the traffic-light cluster so text is visually centered */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.os-body {
+  padding: 28px;
+  overflow-y: auto;
+}
+.os-body img { border-radius: 14px; margin-bottom: 20px; width: 100%; }
+.os-body img.avatar {
+  display: block;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 20px;
+  border: 2px solid rgba(255,255,255,0.35);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+}
+.os-body h3 { font-size: 22px; margin-bottom: 12px; }
+.os-body h4 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 18px 0 6px; }
+.os-body p { font-size: 15px; line-height: 1.65; color: var(--muted); }
+.os-body p.draft-note {
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  margin: -6px 0 4px;
+}
+
 .video-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
+  padding-top: 56.25%;
   overflow: hidden;
-  border-radius: 16px;
-  margin-bottom: 16px; /* space below video for text */
+  border-radius: 14px;
+  margin-bottom: 20px;
 }
-
 .video-wrapper iframe {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   border: 0;
 }
 
-/* Modal content stacking */
-.modal-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 900px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  gap: 16px;
+.glass-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(120,160,210,0.9), rgba(120,180,200,0.85));
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  transition: transform 0.25s ease;
+}
+.glass-btn:hover { transform: translateY(-3px); }
+
+@media (max-width: 640px) {
+  .os-window {
+    top: 50px !important;
+    left: 10px !important;
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - var(--menubar-h) - var(--dock-h) - 20px);
+  }
+  .os-body { padding: 18px; }
 }
 
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FYS0CL65EN"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-FYS0CL65EN');
-</script>
-
-/* ---------- LOGO ---------- */
-.logo {
-  display: flex;
-  align-items: center;
-}
-
-.logo img {
-  height: 42px;        /* perfect size for your nav */
-  width: auto;
-  display: block;
-}
-
-.logo img {
-  height: 42px;
-  filter: drop-shadow(0 0 6px rgba(0,0,0,0.4));
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
 }
