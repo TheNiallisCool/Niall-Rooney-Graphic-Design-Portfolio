@@ -153,12 +153,42 @@ a { color: inherit; }
   background: none;
   border: none;
   color: #fff;
+  text-decoration: none; /* shared with the LinkedIn <a> — keep it looking like the button items, not a link */
   cursor: pointer;
   opacity: 0.85;
   font-size: 13px;
   padding: 4px 2px;
 }
 .menu-item:hover { opacity: 1; }
+.menu-item-linkedin { display: inline-flex; align-items: center; }
+.menu-linkedin-badge {
+  /* Hidden on desktop — the text label already says "LinkedIn" there.
+     Shown instead of that text on mobile, see media query below. */
+  display: none;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Screen-reader-only text — used to flag the LinkedIn link opens a new
+   tab without showing that as visible clutter in the menu bar itself. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .menubar-right { opacity: 0.85; font-variant-numeric: tabular-nums; }
 
 @media (max-width: 640px) {
