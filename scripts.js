@@ -112,10 +112,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleIconActivate(icon) {
-    // Finder-style two-step: the first click just selects it (the highlight).
-    // A second click on an already-selected icon opens it — which also
-    // means two clicks close together (a real double-click) open it in one
-    // motion, without needing a separate dblclick listener.
+    // On touch devices there's no hover state to preview a select-first
+    // step, and no mouse muscle-memory for "click again to open" — one tap
+    // just opens it directly, the way tapping an app icon does anywhere else.
+    if (isMobile()) {
+      deselectAll();
+      icon.classList.add('selected');
+      selectedIcon = icon;
+      const win = document.getElementById(icon.dataset.window);
+      if (win) openWindow(win);
+      return;
+    }
+    // Desktop: Finder-style two-step. The first click just selects it (the
+    // highlight). A second click on an already-selected icon opens it —
+    // which also means two clicks close together (a real double-click)
+    // open it in one motion, without needing a separate dblclick listener.
     if (icon.classList.contains('selected')) {
       const win = document.getElementById(icon.dataset.window);
       if (win) openWindow(win);
@@ -292,15 +303,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (desktop) {
     desktop.addEventListener('click', (e) => {
-      if (isMobile() || e.target.closest('.dt-icon')) return;
-      // Any open window takes priority: a click on empty desktop dismisses
-      // all of them first, same as clicking away from a modal. Only when
-      // nothing is open does that same click summon the Tidy/Mess menu.
+      if (e.target.closest('.dt-icon')) return;
+      // Any open window takes priority: a tap/click on empty desktop
+      // dismisses all of them first, same as tapping away from a modal —
+      // on mobile the open project window covers almost the whole screen,
+      // so this is what makes "tap away to close" actually reachable there.
       if (windowsEls.some(w => w.classList.contains('open'))) {
         closeAllWindows();
         deselectAll();
         return;
       }
+      // The Tidy/Mess context menu is a desktop-only, mouse-driven
+      // convenience — skip summoning it on touch devices.
+      if (isMobile()) return;
       openDesktopMenu(e.clientX, e.clientY);
     });
   }
@@ -327,12 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.zIndex = zTop;
   }
 
-  // Positioning: the first window opened lands dead-center on screen.
-  // Every window opened after that stacks off neatly to the right (and
-  // slightly down) of whichever one opened just before it, so a run of
-  // opens reads as a fanned stack rather than a random cascade. Tracked
-  // in `openStack`, in the order windows were opened; closing one just
-  // drops it out — the rest keep their positions.
   let openStack = [];
   const STACK_STEP_X = 44, STACK_STEP_Y = 28;
   const WIN_MENUBAR_H = 34, WIN_DOCK_H = 78, WIN_EDGE_MARGIN = 12;
@@ -497,8 +506,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       closeAllWindows();
       deselectAll();
-      // "Work" toggles: tidy it up if it's currently messy, mess it back up
-      // if it's already tidy — so hitting it again undoes the last tidy.
       if (desktopMode === 'tidy') messUpDesktop();
       else tidyUp();
     });
