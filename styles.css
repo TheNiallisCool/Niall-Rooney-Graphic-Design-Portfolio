@@ -194,8 +194,13 @@ a { color: inherit; }
 @media (max-width: 640px) {
   .menubar { padding-left: 10px; padding-right: 10px; }
   .menubar-left { gap: 12px; }
+  .menubar-left nav { gap: 12px; } /* 4 items now fit tighter than the desktop 18px gap */
   .menubar-name { display: none; } /* keep just the mark, save space */
   .menubar-right { display: none; } /* clock gives way to nav on small screens */
+  /* LinkedIn: swap its text label for a compact icon badge — "LinkedIn ↗"
+     doesn't fit the bar at phone widths alongside Work/About/Contact. */
+  .menu-item-linkedin .menu-item-text { display: none; }
+  .menu-linkedin-badge { display: flex; }
 }
 
 /* ======================
