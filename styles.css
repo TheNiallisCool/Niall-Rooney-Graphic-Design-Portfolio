@@ -211,4 +211,450 @@ a { color: inherit; }
 .dt-icon-thumb {
   position: relative;
   width: 60px;
-  height:
+  height: 60px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
+  background: #1c1e22;
+  transform-origin: center bottom;
+  transition: transform 0.15s ease-out;
+}
+/* Hover: the icon grows slightly, same idea as the dock's magnify-on-hover.
+   Skipped while dragging so it doesn't fight the drag transform, and while
+   tidying so it doesn't fight the layout-move transition. */
+.dt-icon:hover .dt-icon-thumb,
+.dt-icon:focus-visible .dt-icon-thumb {
+  transform: scale(1.12);
+}
+.dt-icon.dragging .dt-icon-thumb,
+.dt-icon.tidying .dt-icon-thumb {
+  transform: none;
+}
+.dt-icon-thumb img,
+.dt-icon-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Browsers make <img>/<video> natively draggable — starting the OS's own
+     "ghost thumbnail" drag the instant the cursor is over the artwork,
+     which is most of the icon's surface. That fights our own pointer-based
+     drag below it. draggable="false" in the HTML covers Firefox/Safari;
+     this covers Chrome/Edge, which ignore the attribute on video and are
+     inconsistent on img depending on version — belt and suspenders. */
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+.dt-icon-thumb::after {
+  /* glossy sheen — reads as a polished app icon rather than a flat crop */
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(155deg, rgba(255,255,255,0.32), rgba(255,255,255,0) 45%);
+  pointer-events: none;
+}
+.dt-icon-label {
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: center;
+  color: #fff;
+  max-width: 84px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  /* no background by default — just the text over the wallpaper, with
+     enough shadow to stay legible on any part of the art */
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 1px 8px rgba(0,0,0,0.5);
+}
+.dt-icon.selected .dt-icon-label {
+  background: rgba(70, 130, 220, 0.55);
+  text-shadow: none;
+}
+
+/* The 3 key projects (AI Design Systems, Design Language, Cubic³ Rebrand)
+   only grow ~15% bigger while the desktop is tidied — "messy" (the default,
+   and "Mess Up Desktop") treats every icon the same size. `.featured` just
+   marks which 3 they are; `.big` is the toggle Tidy Up applies. Real size
+   increase rather than a transform:scale so the thumbnail and text stay
+   crisp and reflow correctly. */
+.dt-icon.big { width: 101px; }
+.dt-icon.big .dt-icon-thumb { width: 69px; height: 69px; }
+.dt-icon.big .dt-icon-label { font-size: 14px; max-width: 97px; }
+
+/* "Tidy Up Desktop" popup — appears where you click empty desktop space */
+.desktop-menu {
+  position: fixed;
+  z-index: 900;
+  display: none;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+.desktop-menu.open { display: block; }
+.desktop-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  border: none;
+  background: none;
+  color: #fff;
+  font-size: 13px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.desktop-menu button:hover,
+.desktop-menu button:focus-visible { background: rgba(255,255,255,0.14); }
+
+@media (max-width: 640px) {
+  /* Free-form scatter doesn't translate to a small touch screen —
+     fall back to a simple, orderly, non-draggable grid. */
+  /* Sized with clamp(min, vw, max) rather than a fixed px, so icons scale
+     with the actual screen — Android alone ships phones from ~360px up
+     past 450px wide, and tablets well beyond that, all inside this same
+     breakpoint. A fixed 78px icon that looks right on one device reads as
+     tiny on a larger-resolution one; this keeps them proportional instead. */
+  .desktop {
+    overflow-y: auto;
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fill, clamp(72px, 20vw, 112px));
+    justify-content: space-evenly;
+    gap: 14px;
+    padding: 16px 12px;
+  }
+  .dt-icon {
+    position: static !important;
+    transform: none !important;
+    width: clamp(72px, 20vw, 112px);
+    /* The base rule sets touch-action:none for desktop's pointer-drag.
+       On touch devices there's no drag to protect and the grid needs to
+       scroll vertically, so let real finger-scroll gestures through. */
+    touch-action: pan-y;
+  }
+  .dt-icon-thumb { width: clamp(50px, 14vw, 78px); height: clamp(50px, 14vw, 78px); }
+  .dt-icon-label { font-size: clamp(11px, 3.2vw, 13px); max-width: clamp(66px, 18.5vw, 106px); }
+  .desktop-menu { display: none !important; }
+}
+
+/* ======================
+   Dock
+====================== */
+.dock {
+  --dock-icon-size: 48px;
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + var(--safe-bottom)); /* clears a gesture bar / home indicator */
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.28), 0 1px 0 rgba(255,255,255,0.14) inset;
+}
+.dock-icon {
+  width: var(--dock-icon-size);
+  height: var(--dock-icon-size);
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, #4a5568, #262b33);
+  color: #fff;
+  transition: width 0.15s ease-out, height 0.15s ease-out, transform 0.12s ease-out, filter 0.12s ease-out;
+  transform-origin: bottom center;
+  box-shadow:
+    0 6px 14px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.35),
+    inset 0 -7px 10px rgba(0,0,0,0.14);
+}
+.dock-icon:hover, .dock-icon:focus-visible { filter: brightness(1.08); }
+.dock-icon svg {
+  display: block;
+  width: calc(var(--dock-icon-size) * 0.55);
+  height: calc(var(--dock-icon-size) * 0.55);
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
+  transition: width 0.15s ease-out, height 0.15s ease-out;
+}
+
+/* Each reads as its own little app, in the site's own palette rather than
+   Apple's — same idea (Finder / Notes / Mail / Trash), different voice. */
+.dock-finder { background: linear-gradient(115deg, #f0c8a6 50%, #f8ecd9 50%); }
+.dock-notes  { background: linear-gradient(160deg, #ffe9a8, #f0bd5c); }
+.dock-mail   { background: linear-gradient(160deg, #7fb0e6, #4677c9); }
+.dock-trash  { background: linear-gradient(160deg, #6b7480, #40454d); }
+
+/* Personal-about dock icon: a real photo preview instead of a drawn glyph */
+.dock-icon.dock-photo {
+  padding: 0;
+  overflow: hidden;
+  background: #2a2a2f; /* shows briefly while the photo loads */
+}
+.dock-icon.dock-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+/* NR logo mark used as the "About Me (Professional)" dock icon — scales
+   with the dock's resize handle same as the drawn glyphs do */
+.dock-icon img.dock-logo-img {
+  width: calc(var(--dock-icon-size) * 0.72);
+  height: auto;
+  display: block;
+}
+
+/* Resize handle: a thin visible line with a generous invisible grab zone,
+   same idea as the real macOS dock-edge drag handle */
+.dock-resize-handle {
+  width: 17px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.dock-resize-handle::before {
+  content: "";
+  width: 1px;
+  align-self: stretch;
+  margin: 4px 0;
+  background: rgba(255,255,255,0.2);
+}
+.dock-resize-handle:hover::before,
+.dock-resize-handle:active::before { background: rgba(255,255,255,0.45); }
+
+@media (max-width: 640px) {
+  .dock { gap: 10px; padding: 8px 12px; bottom: calc(8px + var(--safe-bottom)); }
+  .dock-icon { width: 40px; height: 40px; }
+  .dock-icon svg { width: 20px; height: 20px; }
+  .dock-resize-handle { display: none; } /* resize-by-drag doesn't suit touch */
+}
+
+/* ======================
+   Windows (project detail panels)
+====================== */
+.os-window {
+  display: none;
+  position: fixed;
+  top: 90px;
+  left: 90px;
+  width: clamp(300px, 90vw, 760px);
+  min-width: 320px;
+  min-height: 220px;
+  max-height: 82vh;
+  max-height: 82dvh; /* dvh accounts for mobile browser toolbars showing/hiding — vh above is just the fallback for browsers that don't support dvh yet */
+  flex-direction: column;
+  z-index: 100;
+  background: var(--glass-fill);
+  backdrop-filter: var(--frost-blur);
+  -webkit-backdrop-filter: var(--frost-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  box-shadow: 0 30px 90px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.12) inset;
+  overflow: hidden;
+}
+.os-window.open { display: flex; }
+.os-window.maximized {
+  top: calc(44px + var(--safe-top)) !important;
+  left: 20px !important;
+  width: calc(100vw - 40px) !important;
+  height: calc(100vh - 44px - var(--safe-top) - var(--dock-h) - var(--safe-bottom)) !important;
+  height: calc(100dvh - 44px - var(--safe-top) - var(--dock-h) - var(--safe-bottom)) !important;
+  max-height: none;
+}
+
+/* Resize handles — all 4 edges plus all 4 corners. Kept fully inside the
+   window's own box (not overhanging) so overflow:hidden doesn't clip them. */
+.os-resize-handle { position: absolute; touch-action: none; }
+
+/* Edges — single axis */
+.os-resize-n { top: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
+.os-resize-s { bottom: 0; left: 18px; right: 18px; height: 8px; cursor: ns-resize; }
+.os-resize-e { right: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
+.os-resize-w { left: 0; top: 18px; bottom: 18px; width: 8px; cursor: ew-resize; }
+
+/* Corners — both axes together, a uniform diagonal scale */
+.os-resize-ne, .os-resize-nw, .os-resize-se, .os-resize-sw {
+  width: 18px; height: 18px;
+  background-image: linear-gradient(var(--grip-angle),
+    transparent 0 40%, rgba(255,255,255,0.4) 40% 46%,
+    transparent 46% 60%, rgba(255,255,255,0.4) 60% 66%,
+    transparent 66% 100%);
+}
+.os-resize-nw { top: 0; left: 0; cursor: nwse-resize; --grip-angle: 135deg; }
+.os-resize-se { bottom: 0; right: 0; cursor: nwse-resize; --grip-angle: 135deg; }
+.os-resize-ne { top: 0; right: 0; cursor: nesw-resize; --grip-angle: 45deg; }
+.os-resize-sw { bottom: 0; left: 0; cursor: nesw-resize; --grip-angle: 45deg; }
+
+.os-window.maximized .os-resize-handle { display: none; }
+
+@media (max-width: 640px) {
+  .os-resize-handle { display: none; } /* the window already fills the screen */
+}
+
+.os-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0 12px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  cursor: grab;
+  touch-action: none;
+}
+.os-titlebar:active { cursor: grabbing; }
+
+.traffic {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  z-index: 2; /* keeps the expanded hit-area below on top of the window's
+                 own edge-resize handles, which otherwise overlap it right
+                 at the titlebar's corners and would win the hit-test */
+}
+.traffic::before {
+  /* Invisible hit-area expansion — the dot stays a crisp 12px visually
+     and the titlebar's spacing doesn't change, but the actual clickable/
+     tappable region grows to a real target size (WCAG 2.5.5). */
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+.traffic.red { background: #ff5f57; }
+.traffic.yellow { background: #febc2e; }
+.traffic.green { background: #28c840; }
+.traffic:hover::after {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+}
+.traffic:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.os-title {
+  margin: 0; /* it's a real <h2> now — clear the browser's default heading margin */
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0.9;
+  margin-right: 44px; /* balances the traffic-light cluster so text is visually centered */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.os-body {
+  padding: 28px;
+  overflow-y: auto;
+}
+.os-body img { border-radius: 14px; margin-bottom: 20px; width: 100%; }
+.os-body video {
+  display: block;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-height: 55vh;   /* hard cap — never lets a video blow past a sane size in the modal */
+  object-fit: contain; /* keeps its own aspect ratio inside that cap instead of stretching */
+  background: #000;
+}
+.os-body img.avatar {
+  display: block;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto 20px;
+  border: 2px solid rgba(255,255,255,0.35);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.4);
+}
+
+/* NR logo mark inside a pop-out — bigger than the dock version, no crop,
+   just the mark centered above the copy */
+.os-body img.brand-mark {
+  display: block;
+  height: 96px;
+  width: auto;
+  margin: 0 auto 24px;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35));
+}
+/* Problem/Solution/Outcome are real <h3>s now (one level under each
+   window's <h2> title) — same small uppercase label look they always had. */
+.os-body h3 { font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 18px 0 6px; }
+.os-body p { font-size: 15px; line-height: 1.65; color: var(--muted); }
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  overflow: hidden;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.video-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.glass-btn {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(120,160,210,0.9), rgba(120,180,200,0.85));
+  color: #fff;
+  text-decoration: none;
+  font-size: 15px;
+  transition: transform 0.25s ease;
+}
+.glass-btn:hover { transform: translateY(-3px); }
+
+@media (max-width: 640px) {
+  .os-window {
+    top: calc(50px + var(--safe-top)) !important;
+    left: 10px !important;
+    width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - var(--menubar-h) - var(--safe-top) - var(--dock-h) - var(--safe-bottom) - 20px);
+    max-height: calc(100dvh - var(--menubar-h) - var(--safe-top) - var(--dock-h) - var(--safe-bottom) - 20px);
+  }
+  .os-body { padding: 18px; }
+  .os-body video { max-height: 40vh; max-height: 40dvh; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
