@@ -307,14 +307,71 @@ a { color: inherit; }
 }
 
 /* The 3 key projects (AI Design Systems, Design Language, Cubic³ Rebrand)
-   only grow ~15% bigger while the desktop is tidied — "messy" (the default,
-   and "Mess Up Desktop") treats every icon the same size. `.featured` just
-   marks which 3 they are; `.big` is the toggle Tidy Up applies. Real size
+   are bigger in every state now, messy included — they're meant to stand
+   out at a glance, not just once the desktop's tidied. `.featured` marks
+   which 3 they are; `.big` is the size itself, applied by JS whenever a
+   layout pass runs (messy scatter, Tidy Up, or a resize reflow). Real size
    increase rather than a transform:scale so the thumbnail and text stay
    crisp and reflow correctly. */
-.dt-icon.big { width: 101px; }
-.dt-icon.big .dt-icon-thumb { width: 69px; height: 69px; }
-.dt-icon.big .dt-icon-label { font-size: 14px; max-width: 97px; }
+.dt-icon.big { width: 116px; }
+.dt-icon.big .dt-icon-thumb { width: 79px; height: 79px; }
+.dt-icon.big .dt-icon-label { font-size: 16px; max-width: 111px; }
+/* Always paint above every ordinary icon — in messy mode especially,
+   where positions are random, a later-in-DOM regular icon would otherwise
+   sometimes stack on top of a featured one purely by document order. */
+.dt-icon.featured { z-index: 3; }
+
+/* Permanent stroke, the 3 key projects only: a thin border always traced
+   around the actual card (icon + label together, not just the thumbnail
+   crop inside it), with a brighter point of light continuously travelling
+   around it — always on, not a hover/focus-only accent.
+     Built as a ring via a mask trick: the pseudo-element is `.dt-icon`'s
+   own box expanded by `inset`, `padding` carves the same-sized hole back
+   out of the middle, and the `mask-composite` subtraction keeps only
+   what's left — a ring exactly `padding` wide, tracing `.dt-icon`'s own
+   border-radius. The conic-gradient carries both parts at once: a
+   low-opacity base (the constant "stroke") and one brighter arc (the
+   "light"). Critically, the *shape* never rotates — only the gradient's
+   `from` angle does, via the registered `--stroke-angle` custom property,
+   so the card's own outline stays perfectly still and only the light
+   travels along it. (A `transform: rotate()` on the ring itself was tried
+   first and looked wrong — the whole card's outline appeared to spin
+   rather than a light moving along a fixed border.) */
+@property --stroke-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+/* No `position: relative` here — `.dt-icon` is already `position: absolute`
+   (that's how the desktop's own drag/scatter layout places it via JS
+   `left`/`top`), and that's already a valid positioning context for the
+   ::before below. Adding `position: relative` on top of it would win on
+   specificity and silently override the absolute positioning, breaking
+   every featured icon's placement. */
+.dt-icon.featured::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--stroke-angle),
+    rgba(255, 255, 255, 0.18) 0deg,
+    rgba(255, 255, 255, 0.18) 300deg,
+    rgba(255, 255, 255, 0.9) 330deg,
+    rgba(255, 255, 255, 1) 345deg,
+    rgba(255, 255, 255, 0.18) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+  animation: featuredStrokeTravel 4s linear infinite;
+  pointer-events: none;
+}
+@keyframes featuredStrokeTravel {
+  from { --stroke-angle: 0deg; }
+  to   { --stroke-angle: 360deg; }
+}
 
 /* "Tidy Up Desktop" popup — appears where you click empty desktop space */
 .desktop-menu {
@@ -692,4 +749,10 @@ a { color: inherit; }
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  /* The blanket rule above only stops transitions — the stroke's
+     travelling light animates `--stroke-angle` via @keyframes, a separate
+     mechanism, so it needs its own off-switch. Left as a static stroke
+     rather than removed outright: still marks the 3 key projects, just
+     without the moving light. */
+  .dt-icon.featured::before { animation: none; }
 }
