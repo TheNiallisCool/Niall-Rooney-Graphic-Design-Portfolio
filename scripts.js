@@ -181,13 +181,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ---- Layout system: "messy" (uniform, scattered — the default) vs
-     "tidy" (the 3 key projects ~15% bigger in their own row up top, the
-     rest in a grid underneath). Which mode is active is tracked so a
-     window resize re-lays-out things the same way. ---- */
+     "tidy" (the 3 key projects an additional 15% bigger — compounding on
+     top of the existing +15% — lined up left-aligned along the top; the
+     rest lined up neatly in a grid underneath). Which mode is active is
+     tracked so a window resize re-lays-out things the same way. ---- */
   const CELL_W = 96, CELL_H = 108, PAD_X = 28, PAD_Y = 24;
   const ICON_W = 88, ICON_H = 96, EDGE_MARGIN = 16, MIN_DIST = 100;
   const FEATURED_ROW_GAP = 46;
-  const FEATURED_W = 101, FEATURED_H = Math.round(96 * 1.15); // matches .dt-icon.big in styles.css
+  // .dt-icon.big is two compounded +15% bumps on the base size — this
+  // mirrors styles.css so the row math (width + gaps) matches what's
+  // actually on screen.
+  const FEATURED_W = 116, FEATURED_H = Math.round(96 * 1.15 * 1.15); // matches .dt-icon.big in styles.css
+  // The 3 key projects need to visibly stand out in messy mode too, not
+  // just tidy: bigger gaps between them so they don't crowd each other.
+  const FEATURED_MIN_DIST = 170;
 
   let desktopMode = 'messy';
   const featuredIcons = () => iconEls.filter(el => el.classList.contains('featured'));
@@ -222,20 +229,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // `randForEl` returns a fresh rand() generator per icon: seeded (stable,
   // for the initial load / resize reflow) or genuinely random (for the
   // "Mess Up Desktop" action, which should shuffle differently every time).
-  function scatterAcrossDesktop(els, randForEl, { animate = false } = {}) {
-    if (!desktop) return;
+  // `yStart`/`yEnd` confine the scatter to a horizontal band — used to keep
+  // the 3 featured icons in the top half, and the rest strictly below it.
+  function scatterAcrossDesktop(els, randForEl, opts = {}) {
+    const {
+      animate = false,
+      yStart = EDGE_MARGIN,
+      yEnd = null,
+      minDist = MIN_DIST,
+      iconW = ICON_W,
+      iconH = ICON_H,
+    } = opts;
+    if (!desktop) return [];
     const rect = desktop.getBoundingClientRect();
-    const maxX = Math.max(EDGE_MARGIN, rect.width - ICON_W - EDGE_MARGIN);
-    const maxY = Math.max(EDGE_MARGIN, rect.height - ICON_H - EDGE_MARGIN);
+    const maxX = Math.max(EDGE_MARGIN, rect.width - iconW - EDGE_MARGIN);
+    const bottom = yEnd != null ? yEnd - iconH : rect.height - iconH - EDGE_MARGIN;
+    const maxY = Math.max(EDGE_MARGIN, bottom - yStart);
     const placed = [];
     els.forEach((el) => {
       const rand = randForEl(el);
       let x, y, tries = 0;
       do {
         x = EDGE_MARGIN + rand() * maxX;
-        y = EDGE_MARGIN + rand() * maxY;
+        y = yStart + rand() * maxY;
         tries += 1;
-      } while (tries < 14 && placed.some(p => Math.hypot(p.x - x, p.y - y) < MIN_DIST));
+      } while (tries < 14 && placed.some(p => Math.hypot(p.x - x, p.y - y) < minDist));
       placed.push({ x, y });
       if (animate) el.classList.add('tidying');
       el.style.left = x + 'px';
@@ -244,12 +262,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (animate) {
       window.setTimeout(() => els.forEach(el => el.classList.remove('tidying')), 520);
     }
+    return placed;
+  }
+
+  // Messy-mode layout for one set of icons: the 3 featured ones scatter
+  // (bigger, with extra breathing room) through the top half only, so they
+  // stand out at a glance; everything else scatters through the bottom
+  // half only. The two bands never overlap, so a regular icon can never
+  // land above (or even level with) the featured 3 — not just usually
+  // clear of them, but structurally unable to.
+  function layoutMessyScatter(els, randForEl, { animate = false } = {}) {
+    if (!desktop) return;
+    const featured = els.filter(el => el.classList.contains('featured'));
+    const regular = els.filter(el => !el.classList.contains('featured'));
+    featured.forEach(el => el.classList.add('big'));
+    regular.forEach(el => el.classList.remove('big'));
+
+    const rect = desktop.getBoundingClientRect();
+    const topHalfEnd = Math.max(EDGE_MARGIN + FEATURED_H, rect.height / 2);
+    scatterAcrossDesktop(featured, randForEl, {
+      animate,
+      yEnd: topHalfEnd,
+      minDist: FEATURED_MIN_DIST,
+      iconW: FEATURED_W,
+      iconH: FEATURED_H,
+    });
+    scatterAcrossDesktop(regular, randForEl, {
+      animate,
+      yStart: topHalfEnd + FEATURED_ROW_GAP / 2,
+    });
   }
 
   function featuredRowFloor() {
     return PAD_Y + FEATURED_H + FEATURED_ROW_GAP;
   }
 
+  // Left-aligned row, starting at the same left margin as the tidy grid
+  // underneath it.
   function layoutFeaturedRow(els) {
     const gapX = 28;
     els.forEach((el, i) => {
@@ -258,10 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // "Tidy Up Desktop" (and "Work"): the 3 key projects get ~15% bigger and
-  // line up in their own row at the top; everything else lines up in a
-  // grid underneath. The featured 3 never fall back into the ordinary
-  // grid alongside the rest — they're always pulled into their row.
+  // "Tidy Up Desktop" (and "Work"): the 3 key projects get an extra 15%
+  // bigger and line up, left-aligned, in their own row at the top; every
+  // other icon lines up neatly in a grid underneath. The featured 3 never
+  // fall back into the ordinary grid alongside the rest — they're always
+  // pulled into their row.
   function tidyUp() {
     if (isMobile() || !desktop) return;
     desktopMode = 'tidy';
@@ -282,21 +332,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // "Mess Up Desktop": genuinely random every time it's invoked (unlike the
-  // stable seeded scatter used on first load). Every icon — including the
-  // 3 "key" ones — is the same size here and scattered like all the rest;
-  // nothing is pinned to a row.
+  // stable seeded scatter used on first load). The 3 "key" projects stay
+  // bigger and confined to the top half here too — only their exact spot
+  // reshuffles, not their prominence — while everything else scatters
+  // freely, nothing pinned to a row.
   function messUpDesktop() {
     if (isMobile() || !desktop) return;
     desktopMode = 'messy';
-    iconEls.forEach(el => { delete el.dataset.userMoved; el.classList.remove('big'); });
-    scatterAcrossDesktop(iconEls, () => Math.random, { animate: true });
+    iconEls.forEach(el => delete el.dataset.userMoved);
+    layoutMessyScatter(iconEls, () => Math.random, { animate: true });
   }
 
   function layoutDesktopIcons() {
     if (isMobile() || !desktop) return;
     desktopMode = 'messy';
-    iconEls.forEach(el => el.classList.remove('big'));
-    scatterAcrossDesktop(iconEls, seededRandForEl);
+    layoutMessyScatter(iconEls, seededRandForEl);
   }
 
   layoutDesktopIcons();
@@ -327,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.top = y + 'px';
       });
     } else {
-      scatterAcrossDesktop(inFormation, seededRandForEl);
+      layoutMessyScatter(inFormation, seededRandForEl);
     }
   });
 
