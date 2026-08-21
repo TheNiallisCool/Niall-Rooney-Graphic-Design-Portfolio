@@ -6,7 +6,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #f3ecd9;
+  --bg: #f9f7f2; /* matches the wallpaper's paper-white ground */
   --text: #ffffff;
   --muted: #c9d1da;
   --glass-border: rgba(255, 255, 255, 0.22);
@@ -60,46 +60,58 @@ a { color: inherit; }
 }
 
 /* ======================
-   Wallpaper — Niall's own illustration, "Strandhill Summer Evening"
+   Wallpaper — a fanned "silk strand" sweep across paper white: a few
+   hundred thick, cleanly separated strands hooking down out of a tight
+   waist at the top-right and curving away to the lower left, with a pastel
+   ramp running across the fan (blue → aqua → green → yellow → orange).
+     The strands are stroked onto a <canvas> by scripts.js rather than
+   being CSS shapes: the whole look depends on hundreds of individually
+   coloured strokes overlapping at different densities, which is exactly
+   what CSS gradients cannot do — soft-focus blobs and blurred wave bands
+   were both tried first and neither gets near it.
+     The motion lives in the canvas too (see scripts.js), which is why
+   there's no CSS animation on the element below.
 ====================== */
 .wallpaper {
   position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  /* Paper white — a warm, slightly creamy stock rather than a screen
+     white, so the empty area reads as paper the strands are printed on. */
+  background: #f9f7f2;
 }
-.wallpaper-img {
+.wallpaper-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 38%;
-  transform-origin: center;
-  animation: wallpaperDrift 60s ease-in-out infinite alternate;
-}
-@keyframes wallpaperDrift {
-  from { transform: scale(1); }
-  to   { transform: scale(1.045); }
-}
-.wallpaper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center, rgba(20,14,10,0) 45%, rgba(20,14,10,0.22) 100%);
+  display: block;
+  /* No transform animation and no `will-change` here on purpose: the
+     strands now carry their own current in the canvas itself, so a
+     second, outer CSS drift would just fight it — and promoting a
+     full-viewport canvas to its own GPU layer for a transform it no
+     longer has is pure cost.
+       Also deliberately no `filter: blur()`. It softened the strand edges
+     nicely, but a blur over a full-viewport canvas that repaints every
+     frame has to be re-rasterised every frame with it — heavy enough to
+     stall the compositor outright. The strokes are anti-aliased and
+     translucent, so they're soft without it. */
 }
 .wallpaper::after {
+  /* Very fine grain — stops the wide, smooth colour transitions from
+     banding on 8-bit displays. */
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .wallpaper-img { animation: none; }
-}
+/* The current is driven by requestAnimationFrame, not CSS, so honouring
+   prefers-reduced-motion for it happens in scripts.js — it draws a single
+   static frame and never starts the loop. Nothing to switch off here. */
 
 /* ======================
    Menu bar
@@ -293,13 +305,18 @@ a { color: inherit; }
   font-size: 12px;
   line-height: 1.25;
   text-align: center;
-  color: #fff;
+  /* Dark text on a light halo, since the wallpaper is now white-grounded —
+     white-on-dark-shadow (what this was) is invisible against it. The halo
+     rather than a solid chip keeps the labels feeling like desktop labels
+     while still holding up over the saturated part of the fan. */
+  color: #14161b;
   max-width: 84px;
   padding: 2px 8px;
   border-radius: 8px;
-  /* no background by default — just the text over the wallpaper, with
-     enough shadow to stay legible on any part of the art */
-  text-shadow: 0 1px 3px rgba(0,0,0,0.85), 0 1px 8px rgba(0,0,0,0.5);
+  text-shadow:
+    0 0 3px rgba(255,255,255,0.95),
+    0 0 7px rgba(255,255,255,0.9),
+    0 1px 2px rgba(255,255,255,0.95);
 }
 .dt-icon.selected .dt-icon-label {
   background: rgba(70, 130, 220, 0.55);
