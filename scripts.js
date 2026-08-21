@@ -128,12 +128,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const sx = (1.14 - 0.28 * u) * w;
         const sy = -0.08 * h;
 
+        //   The two legs have to *meet*: the bottom leg has to run all the
+        // way to the same corner the left leg starts from. It used to stop
+        // short at 0.10w while the left leg began at -0.08w, and that 0.18w
+        // jump in end position tore a visible hole through the lower middle
+        // of the fan — the strand either side of the seam crossed the same
+        // row about 0.09w apart, with nothing in between.
         let ex, ey;
         if (u < 0.45) {
-          ex = (0.70 - 0.60 * (u / 0.45)) * w;
+          ex = (0.70 - 0.78 * (u / 0.45)) * w; // 0.70w → -0.08w, the corner
           ey = 1.08 * h;
         } else {
-          ex = -0.08 * w;
+          ex = -0.08 * w;                      // continues from that corner
           ey = (1.08 - 0.50 * ((u - 0.45) / 0.55)) * h;
         }
 
@@ -880,26 +886,16 @@ document.addEventListener('DOMContentLoaded', () => {
     player.setCurrentTime(0).catch(() => {});
   }
 
-  /* ---------- 7. DOCK ---------- */
+  /* ---------- 7. DOCK ----------
+     The magnify-on-hover is pure CSS now (see `.dock-icon:hover` in
+     styles.css). It used to be a `mousemove` handler on the dock that
+     scaled every icon by its distance from the cursor — the real macOS
+     dock behaviour, which lifts the neighbours too. Scoping it to just the
+     icon under the cursor is exactly what CSS `:hover` already does, so
+     the handler went rather than being rewritten: it also stopped a
+     listener firing on every mouse move and writing inline transforms to
+     all four icons each time. */
   const dock = document.getElementById('dock');
-  const dockIcons = dock ? Array.from(dock.querySelectorAll('.dock-icon')) : [];
-
-  if (dock) {
-    dock.addEventListener('mousemove', (e) => {
-      dockIcons.forEach(icon => {
-        const rect = icon.getBoundingClientRect();
-        const center = rect.left + rect.width / 2;
-        const dist = Math.abs(e.clientX - center);
-        const influence = 90;
-        const maxScale = 1.5;
-        const scale = Math.max(1, maxScale - (dist / influence) * (maxScale - 1));
-        icon.style.transform = `translateY(${(scale - 1) * -16}px) scale(${scale})`;
-      });
-    });
-    dock.addEventListener('mouseleave', () => {
-      dockIcons.forEach(icon => { icon.style.transform = ''; });
-    });
-  }
 
   /* ---- Dock resize handle: drag the divider to grow/shrink the dock ---- */
   const dockResizeHandle = document.getElementById('dockResizeHandle');
