@@ -261,9 +261,15 @@ a { color: inherit; }
   height: 60px;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.25);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.45);
-  background: #1c1e22;
+  /* No border. There used to be a `1px solid rgba(255,255,255,0.25)` here —
+     nominally white, but `box-sizing: border-box` means it composites over
+     this element's own background, and against the old near-black fill that
+     landed around #555: a dark grey ring round every icon, which read as a
+     black stroke against the pale wallpaper. */
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+  /* Light placeholder — only ever visible while a thumbnail loads. A dark
+     one showed as a hard edge round the artwork on this pale ground. */
+  background: #efece5;
   transform-origin: center bottom;
   transition: transform 0.15s ease-out;
 }
@@ -490,7 +496,16 @@ a { color: inherit; }
     inset 0 1px 0 rgba(255,255,255,0.35),
     inset 0 -7px 10px rgba(0,0,0,0.14);
 }
-.dock-icon:hover, .dock-icon:focus-visible { filter: brightness(1.08); }
+/* Magnify the hovered icon only. This is deliberately CSS rather than the
+   distance-based `mousemove` handler it replaced: that one scaled every
+   icon by how near the cursor was, so hovering one visibly lifted its
+   neighbours too. `:hover` can only ever match the icon actually under the
+   cursor. `transform-origin: bottom center` above makes it grow up off the
+   dock floor rather than out of its middle. */
+.dock-icon:hover, .dock-icon:focus-visible {
+  filter: brightness(1.08);
+  transform: translateY(-8px) scale(1.5);
+}
 .dock-icon svg {
   display: block;
   width: calc(var(--dock-icon-size) * 0.55);
