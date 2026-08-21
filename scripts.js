@@ -3,7 +3,7 @@
    scripts.js
    ---------------------------------------------------------
    Sections:
-   1. Wallpaper (static illustration, drift handled in CSS)
+   1. Wallpaper (canvas strand-fan, drawn and animated here)
    2. Menu bar clock
    3. Drag helper (shared by desktop icons + windows)
    4. Desktop icons — messy layout, select/drag/open, "Tidy Up Desktop"
@@ -15,7 +15,220 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ---------- 1. WALLPAPER ---------- */
+  /* ---------- 1. WALLPAPER ----------
+     A tight bundle of thick, cleanly separated pastel "silk" strands
+     fanning across an off-white ground, with a subtle current running
+     through it: each strand's curve leans on its own phase and bands of
+     brightness travel across the bundle, so the sweep is alive without the
+     individual strands ever losing their line.
+       That current means the strands genuinely have to be re-stroked every
+     frame, so the cost is managed deliberately: every strand's fixed
+     properties (position, colour, width, phase) are computed once into a
+     flat array, the per-frame loop only recomputes the parts that actually
+     move, and the buffer is kept at a modest resolution since the graphic
+     is soft-edged anyway. It also stops entirely when the tab is hidden or
+     when the visitor has asked for reduced motion. */
+  (function initWallpaper() {
+    const canvas = document.getElementById('wallpaperCanvas');
+    if (!canvas || !canvas.getContext) return;
+    const ctx = canvas.getContext('2d');
+
+    // Enough to read as a bundle, few enough that the paper still shows
+    // between them — and each one costs a stroke every frame.
+    const STRANDS = 320;
+
+    // Seeded PRNG — the per-strand jitter has to come out identical on
+    // every load and every resize, or the wallpaper would visibly reshuffle
+    // itself whenever the window changed size.
+    function seeded(seed) {
+      let s = seed >>> 0;
+      return () => {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+
+    // Pastel blue → green → orange across the fan, ordered so the ramp
+    // travels *around* the colour wheel (blue → cyan → green → yellow →
+    // amber → orange) rather than straight across it. Blue and orange are
+    // opposites: run them directly into each other and every blend in
+    // between desaturates to grey, which reads as a washed-out hole in the
+    // middle of the fan. Going the long way keeps every intermediate step
+    // a real colour.
+    const STOPS = [
+      [0.00, [205, 230, 247]], // palest blue, at the white edge
+      [0.14, [164, 208, 239]], // pastel blue
+      [0.29, [160, 220, 220]], // aqua
+      [0.43, [167, 226, 195]], // pastel green
+      [0.57, [191, 231, 177]], // green-yellow
+      [0.71, [228, 234, 168]], // pale yellow
+      [0.86, [255, 218, 155]], // pastel amber
+      [1.00, [255, 195, 136]], // light orange
+    ];
+
+    function colourAt(u) {
+      for (let i = 1; i < STOPS.length; i += 1) {
+        if (u <= STOPS[i][0]) {
+          const [p0, c0] = STOPS[i - 1];
+          const [p1, c1] = STOPS[i];
+          const k = (u - p0) / (p1 - p0);
+          return [
+            Math.round(c0[0] + (c1[0] - c0[0]) * k),
+            Math.round(c0[1] + (c1[1] - c0[1]) * k),
+            Math.round(c0[2] + (c1[2] - c0[2]) * k),
+          ];
+        }
+      }
+      return STOPS[STOPS.length - 1][1];
+    }
+
+    // One clean quadratic bow per strand — a single, unbroken curve, so
+    // each strand reads as one continuous line. (A sampled-polyline version
+    // was tried, which allowed a real undulating wave along each strand's
+    // length; it made the bundle look churned rather than combed, so the
+    // motion here comes from the whole curve swinging gently instead.)
+    let strands = [];
+    let w = 0;
+    let h = 0;
+
+    // Everything that never changes per frame is worked out once here.
+    function build() {
+      // Capped at 1.5 rather than the full device ratio: this is a soft,
+      // out-of-focus graphic being redrawn continuously, so the extra
+      // pixels of a 2x buffer cost real frame time and buy nothing you can
+      // see.
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineCap = 'round';
+
+      const rand = seeded(20260821);
+      strands = [];
+
+      for (let i = 0; i < STRANDS; i += 1) {
+        // Tight bundle: the waist spans a narrow band and the ends sweep
+        // through a small arc, so the strands run close and near-parallel
+        // instead of spraying across the whole canvas.
+        const u = Math.min(1, Math.max(0, i / (STRANDS - 1) + (rand() - 0.5) * 0.014));
+
+        // The fan enters at the top-right corner (the first few strands
+        // begin off the right edge, so the bundle wraps the corner rather
+        // than dropping out of the middle of the top edge) and hooks round
+        // to exit low on the left.
+        //   The ends sweep along the bottom edge and then up the left one,
+        // but only as far as 0.58h — comfortably below the midline. That cap
+        // is the point: an earlier attempt let them climb to 0.46h, and the
+        // longest, most saturated strands ended up arcing across the *top*
+        // left, which dragged all the weight off the top-right corner. Held
+        // low, the same left-edge exits give the sweep somewhere to go
+        // without unbalancing it.
+        const sx = (1.14 - 0.28 * u) * w;
+        const sy = -0.08 * h;
+
+        let ex, ey;
+        if (u < 0.45) {
+          ex = (0.70 - 0.60 * (u / 0.45)) * w;
+          ey = 1.08 * h;
+        } else {
+          ex = -0.08 * w;
+          ey = (1.08 - 0.50 * ((u - 0.45) / 0.55)) * h;
+        }
+
+        const [r, g, b] = colourAt(u);
+        strands.push({
+          u,
+          sx, sy, ex, ey,
+          // Bow. Holding the control point near the *start's* x but most of
+          // the way down to the end's y is what bends each strand properly:
+          // it leaves the top heading downward, then turns and runs left
+          // into its end — a hooked quarter-sweep rather than the shallow
+          // diagonal a mid-chord control point gives. Recomputed per frame
+          // with the swing added on top.
+          cxBase: sx + (ex - sx) * 0.10 + 0.06 * w,
+          cyBase: sy + (ey - sy) * 0.86,
+          rgb: `${r},${g},${b}`,
+          // Thick: mostly heavy strokes with a scatter of finer ones over
+          // the top for grain.
+          width: 5 + rand() * rand() * 20,
+          // Loosened a little from the fully-packed version: lower opacity
+          // per strand lets the off-white ground read *between* the strands
+          // rather than everything merging into one solid mass.
+          alpha: Math.min(0.78, (0.14 + rand() * 0.27) * (0.72 + 0.55 * u)),
+          phase: rand() * Math.PI * 2,
+        });
+      }
+    }
+
+    function render(tMs) {
+      const t = tMs / 1000;
+      ctx.clearRect(0, 0, w, h);
+
+      for (let i = 0; i < strands.length; i += 1) {
+        const s = strands[i];
+
+        // The current, kept deliberately gentle: the strand's single control
+        // point drifts, so the whole curve leans and relaxes as one piece
+        // and the line stays clean. The `u * 2.6` term staggers neighbours
+        // so the motion travels across the bundle rather than every strand
+        // moving in lockstep.
+        const cx = s.cxBase + Math.sin(t * 0.34 + s.phase + s.u * 2.6) * 0.030 * w;
+        const cy = s.cyBase + Math.cos(t * 0.26 + s.phase) * 0.016 * h;
+
+        // A slower wave of brightness crossing the bundle (this keys off
+        // `u`, the strand's position in the fan) — most of what reads as
+        // flow comes from this rather than from the movement itself.
+        const pulse = 0.82 + 0.30 * Math.sin(t * 0.42 - s.u * 5.2);
+
+        ctx.strokeStyle = `rgba(${s.rgb},${Math.min(0.95, s.alpha * pulse).toFixed(3)})`;
+        ctx.lineWidth = s.width;
+        ctx.beginPath();
+        ctx.moveTo(s.sx, s.sy);
+        ctx.quadraticCurveTo(cx, cy, s.ex, s.ey);
+        ctx.stroke();
+      }
+    }
+
+    const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let rafId = null;
+
+    function frame(t) {
+      render(t);
+      rafId = window.requestAnimationFrame(frame);
+    }
+    function start() {
+      if (rafId === null) rafId = window.requestAnimationFrame(frame);
+    }
+    function stop() {
+      if (rafId !== null) { window.cancelAnimationFrame(rafId); rafId = null; }
+    }
+
+    build();
+    if (stillMotion.matches) {
+      render(0); // one static frame, no loop
+    } else {
+      start();
+    }
+
+    // Don't burn frames (or battery) animating a wallpaper nobody is
+    // looking at.
+    document.addEventListener('visibilitychange', () => {
+      if (stillMotion.matches) return;
+      if (document.visibilityState === 'hidden') stop();
+      else start();
+    });
+
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        build();
+        if (stillMotion.matches) render(0);
+      }, 150);
+    });
+  })();
 
   /* ---------- 2. MENU BAR CLOCK ---------- */
   (function initClock() {
@@ -171,8 +384,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // The Deck Design icon's preview autoplays on loop like a silent GIF —
   // fine for most people, but a real problem for anyone who's told their
   // OS they don't want unrequested motion. Same prefers-reduced-motion
-  // this site already honors for the wallpaper drift and CSS transitions,
-  // just extended to the one piece of motion CSS alone can't stop.
+  // this site already honors for the wallpaper's current and its CSS
+  // transitions, just extended to video, which CSS alone can't stop.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.querySelectorAll('.dt-icon-thumb video').forEach(v => {
       v.pause();
