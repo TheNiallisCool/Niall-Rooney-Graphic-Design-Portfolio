@@ -935,5 +935,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const win = topWindow();
     if (win) closeWindow(win);
   });
-
+  /* ---------- 9. FIRST-LOAD INTRO ----------
+     Open the professional About window on load, so a first-time visitor
+     lands on an explanation of what this site is rather than on an
+     unlabelled field of icons. From that point it behaves like any other
+     window: its own close button, Escape, and the click-anywhere-on-empty-
+     background handler all dismiss it.
+       This sits at the very end of this handler deliberately. openWindow()
+     reads `openStack`, which is declared with `let` up in the windows
+     section, so calling it any earlier in the file would hit that
+     variable's temporal dead zone and throw. */
+  (function openIntroWindow() {
+    const intro = document.getElementById('win-about');
+    if (intro) openWindow(intro);
+  })();
 });
