@@ -517,10 +517,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return PAD_Y + FEATURED_H + FEATURED_ROW_GAP;
   }
 
-  // Left-aligned row, starting at the same left margin as the tidy grid
+    // Left-aligned row, starting at the same left margin as the tidy grid
   // underneath it.
+  //   The gap collapses when the row would otherwise run past the right
+  // edge. At five featured cards the default 28px gap wants 720px of width,
+  // which a narrow desktop window doesn't have — and `.desktop` is
+  // overflow:hidden, so the last card wouldn't squeeze up, it would simply
+  // disappear off the side. The left margin stays fixed so the row keeps
+  // its alignment with the grid underneath; only the spacing gives.
   function layoutFeaturedRow(els) {
-    const gapX = 28;
+    const MAX_GAP = 28, RIGHT_MARGIN = 8;
+    const width = desktop ? desktop.getBoundingClientRect().width : 0;
+    const spare = width - PAD_X - els.length * FEATURED_W - RIGHT_MARGIN;
+    const gapX = els.length > 1
+      ? Math.max(4, Math.min(MAX_GAP, spare / (els.length - 1)))
+      : MAX_GAP;
     els.forEach((el, i) => {
       el.style.left = (PAD_X + i * (FEATURED_W + gapX)) + 'px';
       el.style.top = PAD_Y + 'px';
