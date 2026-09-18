@@ -11,6 +11,7 @@
    6. Vimeo playback control
    7. Dock (magnify effect + actions)
    8. Keyboard shortcuts
+   9. First-load intro (opens the About window)
    ========================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -879,11 +880,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function pauseVideoIn(win) {
     const iframe = win.querySelector('.vimeo-frame');
-    if (!iframe) return;
-    const player = getPlayer(iframe);
-    if (!player) return;
-    player.pause().catch(() => {});
-    player.setCurrentTime(0).catch(() => {});
+    if (iframe) {
+      const player = getPlayer(iframe);
+      if (player) {
+        player.pause().catch(() => {});
+        player.setCurrentTime(0).catch(() => {});
+      }
+    }
+
+    // YouTube embeds aren't driven by the Vimeo SDK, and closing a window
+    // here only sets display:none — which does NOT stop an iframe. Without
+    // this the film would carry on playing, audible, over a desktop the
+    // visitor thinks they've cleared. `enablejsapi=1` on the embed URL lets
+    // us post the player a pause command directly, so this needs no extra
+    // library (and no YouTube script on every page load).
+    win.querySelectorAll('.youtube-frame').forEach((yt) => {
+      try {
+        yt.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+          '*'
+        );
+      } catch (_) {}
+    });
   }
 
   /* ---------- 7. DOCK ----------
@@ -935,6 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const win = topWindow();
     if (win) closeWindow(win);
   });
+
   /* ---------- 9. FIRST-LOAD INTRO ----------
      Open the professional About window on load, so a first-time visitor
      lands on an explanation of what this site is rather than on an
@@ -949,4 +968,5 @@ document.addEventListener('DOMContentLoaded', () => {
     const intro = document.getElementById('win-about');
     if (intro) openWindow(intro);
   })();
+
 });
